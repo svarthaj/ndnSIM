@@ -100,6 +100,12 @@ public:
   AddRoute(const std::string& nodeName, const Name& prefix, const std::string& otherNodeName,
            int32_t metric);
 
+  static void
+  RemoveRoutes(Ptr<Node> node, const Name& prefix);
+
+  static void
+  RemoveRoute(Ptr<Node> node, const Name& prefix, const Face& face);
+  
   /**
    * \brief remove forwarding entry in FIB
    *

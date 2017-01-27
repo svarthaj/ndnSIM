@@ -68,6 +68,7 @@ using ::ndn::Signature;
 using ::ndn::SignatureInfo;
 using ::ndn::Block;
 using ::ndn::KeyChain;
+using ::ndn::ProdLocInfo;
 
 using ::nfd::Face;
 using ::ndn::util::FaceUri;

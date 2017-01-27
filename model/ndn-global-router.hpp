@@ -88,6 +88,13 @@ public:
   AddLocalPrefix(shared_ptr<Name> prefix);
 
   /**
+   * @brief Remove locally exported prefix
+   * @param prefix Prefix
+   */
+  void
+  RemoveLocalPrefix(shared_ptr<Name> prefix);
+  
+  /**
    * @brief Add edge to the node
    * @param face Face of the edge
    * @param ndn GlobalRouter of another node

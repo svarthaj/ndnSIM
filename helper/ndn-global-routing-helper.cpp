@@ -175,6 +175,16 @@ GlobalRoutingHelper::InstallAll()
 }
 
 void
+GlobalRoutingHelper::RemoveOrigin(const std::string& prefix, Ptr<Node> node)
+{
+  Ptr<GlobalRouter> gr = node->GetObject<GlobalRouter>();
+  NS_ASSERT_MSG(gr != 0, "GlobalRouter is not installed on the node");
+
+  auto name = make_shared<Name>(prefix);
+  gr->RemoveLocalPrefix(name);
+}
+
+void
 GlobalRoutingHelper::AddOrigin(const std::string& prefix, Ptr<Node> node)
 {
   Ptr<GlobalRouter> gr = node->GetObject<GlobalRouter>();
@@ -214,13 +224,16 @@ GlobalRoutingHelper::AddOriginsForAll()
   }
 }
 
-void
+uint32_t
 GlobalRoutingHelper::CalculateRoutes()
 {
+  
   /**
    * Implementation of route calculation is heavily based on Boost Graph Library
    * See http://www.boost.org/doc/libs/1_49_0/libs/graph/doc/table_of_contents.html for more details
    */
+
+  uint32_t changes = 0;
 
   BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnGlobalRouterGraph>));
   BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnGlobalRouterGraph>));
@@ -266,10 +279,24 @@ GlobalRoutingHelper::CalculateRoutes()
         }
         else {
           for (const auto& prefix : dist.first->GetLocalPrefixes()) {
-            NS_LOG_DEBUG(" prefix " << prefix << " reachable via face " << *std::get<0>(dist.second)
-                         << " with distance " << std::get<1>(dist.second) << " with delay "
-                         << std::get<2>(dist.second));
+            //NS_LOG_DEBUG(" prefix " << prefix << " reachable via face " << *std::get<0>(dist.second)
+            //             << " with distance " << std::get<1>(dist.second) << " with delay "
+            //             << std::get<2>(dist.second));
 
+            //shared_ptr<fib::Entry> fibEntry = forwarder->getFib().findLongestPrefixMatch(*prefix);
+            if (prefix->toUri() == "/prod") {
+              for (const auto& nexthops : forwarder->getFib().findLongestPrefixMatch(*prefix).getNextHops()) {
+                shared_ptr<Face> face = std::get<0>(dist.second);
+                if (nexthops.getFace().getId() != face->getId()) {
+                  NS_LOG_DEBUG("Change for " << *prefix << ": " << nexthops.getFace().getId() << " == " << face->getId());
+                  changes++;
+                }
+              }
+            }
+	          FibHelper::RemoveRoutes(*node, *prefix);
+          }
+
+          for (const auto& prefix : dist.first->GetLocalPrefixes()) {
             FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
                                 std::get<1>(dist.second));
           }
@@ -277,6 +304,8 @@ GlobalRoutingHelper::CalculateRoutes()
       }
     }
   }
+  NS_LOG_DEBUG("Total changes: " << changes);
+  return changes;
 }
 
 void
@@ -385,6 +414,25 @@ GlobalRoutingHelper::CalculateAllPossibleRoutes()
     }
   }
 }
+
+/*
+void
+GlobalRoutingHelper::PrintFIBs()
+{
+  for (NodeList::Iterator node = NodeList::Begin(); node != NodeList::End(); node++) {
+    NS_LOG_DEBUG("NODE " << (*node)->GetId());
+    for (const auto& entry : (*node)->GetObject<L3Protocol>()->getForwarder()->getFib()) {
+      if (entry.getPrefix().toUri() != "/" && entry.getPrefix().toUri() != "/hint" && entry.getPrefix().toUri() != "/vicinity") {
+        NS_LOG_DEBUG(entry.getPrefix() << " (");
+        for (auto& nextHop : entry.getNextHops()) {
+          auto face = dynamic_pointer_cast<ndn::Face>(nextHop.getFace());
+          NS_LOG_DEBUG(face->getId() << " (cost=" << nextHop.getCost() << "), ");
+        }
+      }
+    }
+  }
+}
+*/
 
 } // namespace ndn
 } // namespace ns3
