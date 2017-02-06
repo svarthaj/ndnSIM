@@ -83,8 +83,10 @@ protected:
 
 protected:
   Name m_prefix;
-
   map<string, string> m_prefixes;
+  
+  uint32_t m_signature;
+
 };
 
 } // namespace ndn

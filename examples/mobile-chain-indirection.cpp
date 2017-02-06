@@ -63,8 +63,8 @@ main(int argc, char* argv[])
   cmd.Parse(argc, argv);
 
   // Setting simulation time
-  float simulation_time = 30000.0 / (n-1);
-  //float simulation_time = 250;
+  //float simulation_time = 30000.0 / (n-1);
+  float simulation_time = 250;
   
   // Creating nodes
   

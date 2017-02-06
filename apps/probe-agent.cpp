@@ -30,6 +30,7 @@
 #include "helper/ndn-fib-helper.hpp"
 
 #include "ndn-cxx/prodloc-info.hpp"
+#include "ndn-cxx/link.hpp"
 
 #include <memory>
 
@@ -108,13 +109,29 @@ ProbeAgent::OnInterest(shared_ptr<const Interest> interest)
     shared_ptr<Name> forwardName = make_shared<Name>(m_prefixes[prefix]);
     forwardName->append(interest->getName());
 
+    shared_ptr<Link> linkObject = make_shared<Link>();
+    linkObject->addDelegation(10, *forwardName);
+    Signature signature;
+    SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+    signature.setInfo(signatureInfo);
+    signature.setValue(::ndn::makeNonNegativeIntegerBlock(::ndn::tlv::SignatureValue, m_signature));
+    linkObject->setSignature(signature);
+
     shared_ptr<Interest> forwardInterest = make_shared<Interest>();
     forwardInterest->setNonce(interest->getNonce());
-    forwardInterest->setName(*forwardName);
+
+    forwardInterest->setLink(linkObject->wireEncode());
+    forwardInterest->setSelectedDelegation(0);
+    forwardInterest->setName(interest->getName());
+    
+    //forwardInterest->setName(*forwardName);
+  
+    if(forwardInterest->hasLink())
+      NS_LOG_DEBUG("Forward Interst " << forwardInterest->getName() << " with link delegation " << forwardInterest->getSelectedDelegation());
 
     m_transmittedInterests(forwardInterest, this, m_face);
     m_appLink->onReceiveInterest(*forwardInterest);
-    NS_LOG_DEBUG("Node" << GetNode()->GetId() << " forwarding interest " << forwardName->toUri());
+    NS_LOG_DEBUG("Node" << GetNode()->GetId() << " forwarding interest " << forwardInterest->getName());
   }
 }
 

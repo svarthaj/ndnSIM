@@ -63,6 +63,7 @@ using std::make_shared;
 
 using ::ndn::Interest;
 using ::ndn::Data;
+using ::ndn::Link;
 using ::ndn::KeyLocator;
 using ::ndn::Signature;
 using ::ndn::SignatureInfo;
